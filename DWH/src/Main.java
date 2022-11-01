@@ -9,19 +9,19 @@ public class Main {
     public static <MultiHashMap, Int> void main(String[] args) {
         try{
             Scanner sc= new Scanner(System.in);
-//            System.out.print("Enter a DataBase Name: ");
-//            String db= sc.nextLine();
-//            System.out.print("Enter Your User Name: ");
-//            String user_name= sc.nextLine();
-//            System.out.print("Enter Your Password: ");
-//            String password= sc.nextLine();
+            System.out.print("Enter a DataBase Name: ");
+            String db= sc.nextLine();
+            System.out.print("Enter Your User Name: ");
+            String user_name= sc.nextLine();
+            System.out.print("Enter Your Password: ");
+            String password= sc.nextLine();
 
             Connection connect_DB = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/"+"db", "root", "1234");
+                    "jdbc:mysql://127.0.0.1:3306/"+db, user_name, password);
             Statement stmt = connect_DB.createStatement();
 
             Connection connect_DWH = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/i191708_DWH", "root", "1234");
+                    "jdbc:mysql://127.0.0.1:3306/i191708_DWH", user_name, password);
             Statement DWH_stat = connect_DWH.createStatement();
             System.out.println("\n");
 
@@ -32,7 +32,7 @@ public class Main {
             Queue<List> Transactions_Queue = new LinkedList<>();
 
             int batch_no = 1;
-            for(int Outer=0; Outer<260; Outer++) {
+            for(int Outer=0; Outer<206; Outer++) {
                 ResultSet DB_result = stmt.executeQuery("SELECT * FROM transactions limit 50 offset "+DB_transactions);
 
                 List<List> Queue = new LinkedList<>();
@@ -98,7 +98,7 @@ public class Main {
                                     Total_sale *= Double.parseDouble(((String) MultiHashMap.get(tran_id).get(0).get(7)));
                                     MultiHashMap.get(tran_id).get(1).add(String.valueOf(((String) MD.get(MD.size() - 1))));
                                     MultiHashMap.get(tran_id).get(1).add(String.valueOf((Total_sale)));
-//                                    System.out.println(MultiHashMap.get(tran_id));
+                                    //System.out.println(MultiHashMap.get(tran_id));
                                 }
                             }
                         }
@@ -116,16 +116,20 @@ public class Main {
                             if (MD_cust.equals(cust_id)) {
                                 if (MultiHashMap.get(tran_id).get(2).size() == 0) {
                                     MultiHashMap.get(tran_id).get(2).add((String) MD.get(MD.size()-1));
-//                                    System.out.println(MultiHashMap.get(tran_id));
+                                    //System.out.println(MultiHashMap.get(tran_id));
                                 }
                             }
                         }
                     }
                 }
 
+                DB_transactions += 50;  // Total 10,000 rows
+                DB_customer += 10;   // Total 50 Rows
+                DB_product += 20;   // Total 100 Rows
+
                 if (Transactions_Queue.size()==5) {
                     List Top = (List) ((LinkedList<List>) Transactions_Queue).peek();
-//                    System.out.println(Top);
+                    //System.out.println(Top);
                     List<List> Send_List = new LinkedList<>();
                     for (int fetch = 0; fetch < Top.size(); fetch++) {
                         List temp = (List<String>) Top.get(fetch);
@@ -135,7 +139,7 @@ public class Main {
                         //System.out.println(MultiHashMap.get(tran_id));
                     }
                     for (int f = 0; f < Send_List.size(); f++) {
-//                         System.out.println(Send_List.get(f));
+                        //System.out.println(Send_List.get(f));
                         List<String> Tran = (List<String>) Send_List.get(f).get(0);
                         List<String> Product = (List<String>) Send_List.get(f).get(1);
                         List<String> Customer = (List<String>) Send_List.get(f).get(2);
@@ -206,7 +210,9 @@ public class Main {
                             ins.setString(7, (String) Tran.get(7));
                             ins.setString(8, (String) Product.get(4));
                             ins.executeUpdate();
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                            System.out.println(Send_List.get(f));
+                        }
                     }
                     System.out.println("Batch No "+batch_no+" Send to DWH");
                     batch_no +=1;
@@ -218,11 +224,6 @@ public class Main {
                         DB_product = 0;
                     }
                 }
-
-                DB_transactions += 50;  // Total 10,000 rows
-                DB_customer += 10;   // Total 50 Rows
-                DB_product += 20;   // Total 100 Rows
-
             }
             System.out.println("\nData Send To DataWareHouse Successfully !");
             connect_DWH.close();
